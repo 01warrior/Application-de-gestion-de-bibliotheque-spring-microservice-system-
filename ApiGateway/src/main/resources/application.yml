@@ -41,6 +41,7 @@ logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.web: DEBUG
+    ma.mundiapolis.apigateway: DEBUG
 
 # JWT Configuration
 jwt:

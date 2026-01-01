@@ -34,6 +34,6 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -100;
+        return -200; // execute first to add correlation ID
     }
 }
