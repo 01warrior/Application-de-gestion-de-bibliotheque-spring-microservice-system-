@@ -1,6 +1,6 @@
 # Système de Gestion de Bibliothèque - Microservices
 
-Ce projet est une application de gestion de bibliothèque basée sur une architecture microservices avec Spring Boot et Spring Cloud.
+Ce projet est mon projet final de formation sur Spring, une application de gestion de bibliothèque basée sur une architecture microservices avec Spring Boot et Spring Cloud ou nous avons eu a explorer les microservices eureka pour la decouverte le tout centralisé en un seul point dentré via apiGateway securisé avec JWT et RBAC(Role-Based Access Control) avec evidemment Les routes publiques comme /login et /register exemptées.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ L'application est composée des services suivants :
 
 ## Démarrage
 
-Ordre de démarrage que nous que jai priorisé :
+Ordre de démarrage que nous que j'ai priorisé :
 
 1. Eureka Server
 2. User Service / Book Service / Loan Service
@@ -69,7 +69,7 @@ _Copiez le token reçu pour les étapes suivantes._
 
 #### 2. Test du Contrôle d'Accès (RBAC)
 
-**Tentative de création de livre en tant que simple USER (Doit échouer : 403 Forbidden)**
+**Tentative de création de livre en tant que simple USER ( échoue et normal expressement fait : 403 Forbidden)**
 
 ```bash
 curl -X POST http://localhost:8080/api/books \
