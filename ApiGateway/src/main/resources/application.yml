@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://USERSERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+        - id: book-service
+          uri: lb://BOOKSERVICE
+          predicates:
+            - Path=/api/books/**
+          filters:
+            - StripPrefix=0
+        - id: loan-service
+          uri: lb://EMPRUNTSSERVICE
+          predicates:
+            - Path=/api/loans/**
+          filters:
+            - StripPrefix=0
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: DEBUG
+
+# JWT Configuration
+jwt:
+  secret: mySecretKeyForHS512AlgorithmMustBeAtLeast64CharactersLongForSecurityCompliance
+  expiration: 86400000
