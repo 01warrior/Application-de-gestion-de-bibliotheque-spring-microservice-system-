@@ -35,4 +35,4 @@ logging:
 # JWT Configuration
 jwt:
   secret: mySecretKeyForHS512AlgorithmMustBeAtLeast64CharactersLongForSecurityCompliance
-  expiration: 86400000 # 24 hours in milliseconds
+  expiration: 86400000 # 24 hours in millisecondsw

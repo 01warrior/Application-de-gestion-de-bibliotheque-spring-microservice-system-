@@ -23,6 +23,11 @@ public class EmpruntController {
         return new ResponseEntity<>(empruntService.createEmprunt(empruntRequest), HttpStatus.CREATED);
     }
 
+    @GetMapping
+    public ResponseEntity<List<EmpruntResponse>> getAllEmprunts() {
+        return ResponseEntity.ok(empruntService.getAllEmprunts());
+    }
+
     @PutMapping("/{id}/return")
     public ResponseEntity<EmpruntResponse> returnEmprunt(@PathVariable Long id) {
         return ResponseEntity.ok(empruntService.returnEmprunt(id));
@@ -42,7 +47,7 @@ public class EmpruntController {
     public ResponseEntity<List<EmpruntResponse>> getEmpruntsByBookId(@PathVariable Long bookId) {
         return ResponseEntity.ok(empruntService.getEmpruntsByBookId(bookId));
     }
-    
+
     @GetMapping("/overdue")
     public ResponseEntity<List<EmpruntResponse>> getOverdueEmprunts() {
         return ResponseEntity.ok(empruntService.getOverdueEmprunts());

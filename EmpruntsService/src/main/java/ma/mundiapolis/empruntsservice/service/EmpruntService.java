@@ -1,6 +1,7 @@
 package ma.mundiapolis.empruntsservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ma.mundiapolis.empruntsservice.dto.BookDTO;
 import ma.mundiapolis.empruntsservice.dto.EmpruntRequest;
 import ma.mundiapolis.empruntsservice.dto.EmpruntResponse;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class EmpruntService implements IEmpruntService {
 
@@ -29,25 +31,28 @@ public class EmpruntService implements IEmpruntService {
 
     @Override
     public EmpruntResponse createEmprunt(EmpruntRequest empruntRequest) {
+        log.info("createEmprunt request received: utilisateurId={}, livreId={}", empruntRequest.getUtilisateurId(),
+                empruntRequest.getLivreId());
         // 1. Vérifier si l'utilisateur existe via WebClient
         try {
             webClient.get()
-                    .uri("http://USER-SERVICE/api/users/{id}", empruntRequest.getUtilisateurId())
+                    .uri("http://USERSERVICE/api/users/{id}", empruntRequest.getUtilisateurId())
                     .retrieve()
                     .bodyToMono(UserDTO.class)
                     .block(); // .block() car on est dans un service synchrone (Spring MVC)
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Utilisateur non trouvé avec l'ID : " + empruntRequest.getUtilisateurId());
+            throw new ResourceNotFoundException(
+                    "Utilisateur non trouvé avec l'ID : " + empruntRequest.getUtilisateurId());
         }
 
         // 2. Vérifier la disponibilité du livre via WebClient
         try {
             Boolean available = webClient.get()
-                    .uri("http://BOOK-SERVICE/api/books/{id}/availability", empruntRequest.getLivreId())
+                    .uri("http://BOOKSERVICE/api/books/{id}/availability", empruntRequest.getLivreId())
                     .retrieve()
                     .bodyToMono(Boolean.class)
                     .block();
-            
+
             if (Boolean.FALSE.equals(available)) {
                 throw new BusinessRuleException("Livre indisponible avec l'ID : " + empruntRequest.getLivreId());
             }
@@ -57,9 +62,8 @@ public class EmpruntService implements IEmpruntService {
 
         // 3. Vérifier localement si le livre est déjà emprunté (Double check)
         boolean estEmprunte = empruntRepository.existsByLivreIdAndStatutIn(
-                empruntRequest.getLivreId(), 
-                List.of(StatutEmprunt.ACTIF, StatutEmprunt.EN_RETARD)
-        );
+                empruntRequest.getLivreId(),
+                List.of(StatutEmprunt.ACTIF, StatutEmprunt.EN_RETARD));
 
         if (estEmprunte) {
             throw new BusinessRuleException("Ce livre est déjà en cours d'emprunt");
@@ -89,7 +93,7 @@ public class EmpruntService implements IEmpruntService {
 
         emprunt.setDateRetourEffective(LocalDate.now());
         emprunt.setStatut(StatutEmprunt.RETOURNE);
-        
+
         Emprunt updatedEmprunt = empruntRepository.save(emprunt);
         return empruntMapper.toResponse(updatedEmprunt);
     }
@@ -118,7 +122,12 @@ public class EmpruntService implements IEmpruntService {
     @Transactional(readOnly = true)
     public List<EmpruntResponse> getOverdueEmprunts() {
         return empruntMapper.toResponseList(
-            empruntRepository.findByDateRetourPrevueBeforeAndStatut(LocalDate.now(), StatutEmprunt.ACTIF)
-        );
+                empruntRepository.findByDateRetourPrevueBeforeAndStatut(LocalDate.now(), StatutEmprunt.ACTIF));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmpruntResponse> getAllEmprunts() {
+        return empruntMapper.toResponseList(empruntRepository.findAll());
     }
 }

@@ -18,62 +18,105 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class UtilisateurService implements IUtilisateurService {
-    
+
     private final UtilisateurRepository utilisateurRepository;
     private final PasswordEncoder passwordEncoder;
     private final UtilisateurMapper utilisateurMapper;
-    
+
     @Override
     @Transactional(readOnly = true)
     public Utilisateur findById(Long id) {
         return utilisateurRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public Utilisateur findByEmail(String email) {
         return utilisateurRepository.findByEmail(email)
-            .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + email));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<Utilisateur> searchUsers(String query) {
         log.info("Recherche d'utilisateurs avec la requête: {}", query);
         return utilisateurRepository.searchByNomOrEmail(query);
     }
-    
+
     @Override
     @Transactional
     public Utilisateur updateProfile(Long userId, RegisterRequest request) {
         log.info("Mise à jour du profil pour l'utilisateur ID: {}", userId);
-        
+
         Utilisateur utilisateur = findById(userId);
-        
+
         // Vérifier si l'email a changé et s'il n'existe pas déjà
-        if (!utilisateur.getEmail().equals(request.getEmail()) && 
-            utilisateurRepository.existsByEmail(request.getEmail())) {
+        if (!utilisateur.getEmail().equals(request.getEmail()) &&
+                utilisateurRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Un utilisateur avec cet email existe déjà");
         }
-        
+
         // Mettre à jour les informations avec MapStruct
         utilisateurMapper.updateEntityFromRequest(request, utilisateur);
-        
+
         // Mettre à jour le mot de passe si fourni
         if (request.getMotDePasse() != null && !request.getMotDePasse().isEmpty()) {
             utilisateur.setMotDePasse(passwordEncoder.encode(request.getMotDePasse()));
         }
-        
+
         utilisateur = utilisateurRepository.save(utilisateur);
         log.info("Profil mis à jour avec succès pour l'utilisateur: {}", utilisateur.getEmail());
-        
+
         return utilisateur;
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<Utilisateur> findAll() {
         return utilisateurRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public Utilisateur updateUser(Long id, ma.mundiapolis.userservice.dto.UpdateUserRequest request) {
+        Utilisateur utilisateur = findById(id);
+
+        if (request.getEmail() != null && !utilisateur.getEmail().equals(request.getEmail()) &&
+                utilisateurRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Un utilisateur avec cet email existe déjà");
+        }
+
+        if (request.getNom() != null)
+            utilisateur.setNom(request.getNom());
+        if (request.getEmail() != null)
+            utilisateur.setEmail(request.getEmail());
+        if (request.getAdresse() != null)
+            utilisateur.setAdresse(request.getAdresse());
+        if (request.getTelephone() != null)
+            utilisateur.setTelephone(request.getTelephone());
+        if (request.getMotDePasse() != null && !request.getMotDePasse().isEmpty()) {
+            utilisateur.setMotDePasse(passwordEncoder.encode(request.getMotDePasse()));
+        }
+        if (request.getRole() != null) {
+            try {
+                utilisateur.setRole(ma.mundiapolis.userservice.model.Role.valueOf(request.getRole().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new ma.mundiapolis.userservice.exception.BusinessRuleException(
+                        "Role invalide: " + request.getRole());
+            }
+        }
+
+        utilisateur = utilisateurRepository.save(utilisateur);
+        return utilisateur;
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(Long id) {
+        if (!utilisateurRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + id);
+        }
+        utilisateurRepository.deleteById(id);
     }
 }

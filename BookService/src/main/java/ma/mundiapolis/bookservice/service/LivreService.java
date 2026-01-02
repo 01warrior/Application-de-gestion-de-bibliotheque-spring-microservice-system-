@@ -30,7 +30,7 @@ public class LivreService implements ILivreService {
         if (livreRepository.existsByIsbn(livreRequest.getIsbn())) {
             throw new BusinessRuleException("Un livre avec cet ISBN existe déjà");
         }
-        
+
         Livre livre = livreMapper.toEntity(livreRequest);
         Livre savedLivre = livreRepository.save(livre);
         return livreMapper.toResponse(savedLivre);
@@ -69,8 +69,7 @@ public class LivreService implements ILivreService {
     @Transactional(readOnly = true)
     public List<LivreResponse> searchLivres(String query) {
         return livreMapper.toResponseList(
-            livreRepository.findByTitreContainingIgnoreCaseOrAuteurContainingIgnoreCase(query, query)
-        );
+                livreRepository.findByTitreContainingIgnoreCaseOrAuteurContainingIgnoreCase(query, query));
     }
 
     @Override
@@ -78,32 +77,36 @@ public class LivreService implements ILivreService {
         if (!livreRepository.existsById(id)) {
             throw new ResourceNotFoundException("Livre non trouvé avec l'ID : " + id);
         }
-        
+
         try {
             List<EmpruntResponse> loans = webClient.get()
-                    .uri("http://LOAN-SERVICE/api/loans/book/{id}", id)
+                    .uri("http://EMPRUNTSSERVICE/api/loans/book/{id}", id)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<EmpruntResponse>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<EmpruntResponse>>() {
+                    })
                     .block();
 
             boolean isBorrowed = loans != null && loans.stream()
-                .anyMatch(l -> "ACTIF".equals(l.getStatut()) || "EN_RETARD".equals(l.getStatut()));
-            
+                    .anyMatch(l -> "ACTIF".equals(l.getStatut()) || "EN_RETARD".equals(l.getStatut()));
+
             if (isBorrowed) {
                 throw new BusinessRuleException("Impossible de supprimer un livre en cours d'emprunt");
             }
         } catch (Exception e) {
-            // Si le service d'emprunt est injoignable, on bloque par précaution ou on log l'erreur?
+            // Si le service d'emprunt est injoignable, on bloque par précaution ou on log
+            // l'erreur?
             // "Protection contre suppression" -> Mieux vaut bloquer si on n'est pas sûr.
-            // Mais si c'est une 404 (pas d'emprunts trouvés pour ce livre ou endpoint n'existe pas encore?), c'est ok.
-            // Simplification: on log et on laisse passer si c'est une erreur technique, mais ici on suppose que ça marche.
+            // Mais si c'est une 404 (pas d'emprunts trouvés pour ce livre ou endpoint
+            // n'existe pas encore?), c'est ok.
+            // Simplification: on log et on laisse passer si c'est une erreur technique,
+            // mais ici on suppose que ça marche.
             // Pour le "clean code", on catch pas Exception générique idéalement.
             if (e instanceof BusinessRuleException) {
                 throw e;
             }
             // Log warning logic here
         }
-        
+
         livreRepository.deleteById(id);
     }
 

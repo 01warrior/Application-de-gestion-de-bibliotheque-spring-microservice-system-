@@ -19,11 +19,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class UtilisateurController {
-    
+
     private final IAuthService authService;
     private final IUtilisateurService utilisateurService;
     private final UtilisateurMapper utilisateurMapper;
-    
+
     /**
      * Inscription d'un nouvel utilisateur
      */
@@ -33,7 +33,7 @@ public class UtilisateurController {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     /**
      * Authentification d'un utilisateur
      */
@@ -43,7 +43,7 @@ public class UtilisateurController {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Obtenir le profil de l'utilisateur connecté
      */
@@ -52,13 +52,13 @@ public class UtilisateurController {
         // Extraire le token (enlever "Bearer ")
         String jwtToken = token.substring(7);
         String email = authService.getEmailFromToken(jwtToken);
-        
+
         Utilisateur utilisateur = utilisateurService.findByEmail(email);
         UtilisateurResponse response = utilisateurMapper.toResponse(utilisateur);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Mettre à jour le profil de l'utilisateur connecté
      */
@@ -66,18 +66,18 @@ public class UtilisateurController {
     public ResponseEntity<UtilisateurResponse> updateProfile(
             @RequestHeader("Authorization") String token,
             @Valid @RequestBody RegisterRequest request) {
-        
+
         // Extraire le token (enlever "Bearer ")
         String jwtToken = token.substring(7);
         String email = authService.getEmailFromToken(jwtToken);
-        
+
         Utilisateur currentUser = utilisateurService.findByEmail(email);
         Utilisateur updatedUser = utilisateurService.updateProfile(currentUser.getId(), request);
         UtilisateurResponse response = utilisateurMapper.toResponse(updatedUser);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Obtenir un utilisateur par ID (admin seulement)
      */
@@ -87,7 +87,7 @@ public class UtilisateurController {
         UtilisateurResponse response = utilisateurMapper.toResponse(utilisateur);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * Rechercher des utilisateurs (admin seulement)
      */
@@ -97,7 +97,7 @@ public class UtilisateurController {
         List<UtilisateurResponse> responses = utilisateurMapper.toResponseList(utilisateurs);
         return ResponseEntity.ok(responses);
     }
-    
+
     /**
      * Obtenir tous les utilisateurs (admin seulement)
      */
@@ -106,5 +106,19 @@ public class UtilisateurController {
         List<Utilisateur> utilisateurs = utilisateurService.findAll();
         List<UtilisateurResponse> responses = utilisateurMapper.toResponseList(utilisateurs);
         return ResponseEntity.ok(responses);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UtilisateurResponse> updateUser(@PathVariable Long id,
+            @RequestBody ma.mundiapolis.userservice.dto.UpdateUserRequest request) {
+        Utilisateur updated = utilisateurService.updateUser(id, request);
+        UtilisateurResponse response = utilisateurMapper.toResponse(updated);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        utilisateurService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }
