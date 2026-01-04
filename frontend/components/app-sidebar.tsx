@@ -30,9 +30,15 @@ export function AppSidebar() {
 
   const navigationItems = [
     {
+      title: "Tableau de bord",
+      icon: Book,
+      url: "/dashboard",
+      show: true,
+    },
+    {
       title: "Catalogue",
       icon: Library,
-      url: "/dashboard",
+      url: "/dashboard/catalogue",
       show: true,
     },
     {
@@ -83,18 +89,21 @@ export function AppSidebar() {
             <SidebarMenu>
               {navigationItems
                 .filter((item) => item.show)
-                .map((item) => (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      onClick={() => router.push(item.url)}
-                      isActive={pathname === item.url}
-                    >
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                .map((item) => {
+                  const isActive = item.url === "/dashboard" ? pathname === item.url : pathname.startsWith(item.url)
+                  return (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        onClick={() => router.push(item.url)}
+                        isActive={isActive}
+                      >
+                        <item.icon className="size-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

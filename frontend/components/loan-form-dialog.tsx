@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { loanService } from "@/lib/services"
 import { API_BASE } from "@/lib/api"
@@ -20,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Handshake } from "lucide-react"
+import { bookService } from "@/lib/services"
 
 interface LoanFormDialogProps {
   bookId: number
@@ -31,8 +30,38 @@ export function LoanFormDialog({ bookId, bookTitle, onSuccess }: LoanFormDialogP
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [utilisateurId, setUtilisateurId] = useState("")
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
+
   const { user } = useAuth()
   const { toast } = useToast()
+
+  useEffect(() => {
+    let mounted = true
+    const fetchAvailability = async () => {
+      try {
+        // Log start and token presence
+        // eslint-disable-next-line no-console
+        console.log('fetchAvailability start', { bookId, hasToken: !!user?.token })
+        const available = await bookService.isBookAvailable(bookId, user?.token)
+        // eslint-disable-next-line no-console
+        console.log('availability for book', bookId, available)
+        if (mounted) setIsAvailable(available)
+      } catch (e) {
+        if (mounted) {
+          setIsAvailable(false)
+          toast({ title: "Erreur", description: "Impossible de vérifier la disponibilité du livre.", variant: "destructive" })
+        }
+      }
+    }
+
+    if (open) fetchAvailability()
+    else setIsAvailable(null)
+
+    return () => {
+      mounted = false
+    }
+  }, [open, bookId, user?.token, toast])
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +80,8 @@ export function LoanFormDialog({ bookId, bookTitle, onSuccess }: LoanFormDialogP
         title: "Emprunt créé",
         description: `Le livre "${bookTitle}" a été prêté avec succès.`,
       })
+      // Mark unavailable locally to avoid immediate re-submit
+      setIsAvailable(false)
       setOpen(false)
       setUtilisateurId("")
       onSuccess?.()
@@ -101,9 +132,20 @@ export function LoanFormDialog({ bookId, bookTitle, onSuccess }: LoanFormDialogP
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" className="w-full rounded-lg" disabled={isLoading}>
-              {isLoading ? "Traitement..." : "Confirmer le prêt"}
-            </Button>
+            <div className="w-full flex flex-col items-stretch">
+              <Button type="submit" className="w-full rounded-lg" disabled={isLoading || isAvailable !== true}>
+                {isLoading ? "Traitement..." : "Confirmer le prêt"}
+              </Button>
+              {isAvailable === false && (
+                <div className="text-sm text-destructive mt-2 self-start">Ce livre est actuellement indisponible.</div>
+              )}
+              {isAvailable === null && (
+                <div className="text-sm text-muted-foreground mt-2 self-start flex items-center gap-2">
+                  <span className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin inline-block" />
+                  Vérification...
+                </div>
+              )}
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

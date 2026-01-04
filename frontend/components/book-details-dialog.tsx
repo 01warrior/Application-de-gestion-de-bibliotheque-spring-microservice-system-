@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { bookService } from "@/lib/services"
 
 interface BookDetailsDialogProps {
   bookId: number
@@ -31,6 +32,34 @@ export function BookDetailsDialog({ bookId, title, author, categorie, isbn, onSu
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
+
+  // Fetch availability when dialog opens
+  React.useEffect(() => {
+    let mounted = true
+    const fetchAvailability = async () => {
+      try {
+        // eslint-disable-next-line no-console
+        console.log("fetchAvailability start", { bookId, hasToken: !!user?.token })
+        const available = await bookService.isBookAvailable(bookId, user?.token)
+        // eslint-disable-next-line no-console
+        console.log("availability for book", bookId, available)
+        if (mounted) setIsAvailable(available)
+      } catch (e) {
+        if (mounted) {
+          setIsAvailable(false)
+          toast({ title: "Erreur", description: "Impossible de vérifier la disponibilité du livre.", variant: "destructive" })
+        }
+      }
+    }
+
+    if (open) fetchAvailability()
+    else setIsAvailable(null)
+
+    return () => {
+      mounted = false
+    }
+  }, [open, bookId, user?.token, toast])
 
   const handleBorrow = async () => {
     if (!user?.token || !user?.id) {
@@ -43,6 +72,8 @@ export function BookDetailsDialog({ bookId, title, author, categorie, isbn, onSu
       await loanService.createLoan({ loan: { utilisateurId: user.id, livreId: bookId }, token: user.token })
       toast({ title: "Emprunt enregistré", description: `Vous avez emprunté "${title}".` })
       onSuccess?.()
+      // Mark unavailable locally immediately to avoid a fast double-click race
+      setIsAvailable(false)
       setOpen(false)
     } catch (e: any) {
       const msg = e?.message || "Impossible d'enregistrer l'emprunt."
@@ -78,9 +109,20 @@ export function BookDetailsDialog({ bookId, title, author, categorie, isbn, onSu
         </DialogHeader>
         <div className="mt-4">
           {user?.role === "USER" ? (
-            <Button className="w-full" onClick={handleBorrow} disabled={isLoading}>
-              {isLoading ? "Traitement..." : "Emprunter"}
-            </Button>
+            <>
+              <Button className="w-full" onClick={handleBorrow} disabled={isLoading || isAvailable !== true}>
+                {isLoading ? "Traitement..." : "Emprunter"}
+              </Button>
+              {isAvailable === false && (
+                <div className="text-sm text-destructive mt-2">Ce livre est actuellement indisponible.</div>
+              )}
+              {isAvailable === null && (
+                <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
+                  <span className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin inline-block" />
+                  Vérification...
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-sm text-muted-foreground">Connectez-vous en tant qu'utilisateur pour emprunter.</div>
           )}

@@ -13,12 +13,14 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j // pour le logging histoire de pouvoir logger des messages deboguer
 public class LivreService implements ILivreService {
 
     private final LivreRepository livreRepository;
@@ -115,8 +117,45 @@ public class LivreService implements ILivreService {
         if (!livreRepository.existsById(id)) {
             throw new ResourceNotFoundException("Livre non trouvé avec l'ID : " + id);
         }
-        // Pour l'instant on retourne true si le livre existe
-        // TODO: Intégrer avec EmpruntsService pour vérifier la vraie disponibilité
-        return true;
+
+        // Interroger EmpruntsService pour vérifier s'il existe des emprunts actifs ou
+        // en retard
+        try {
+            // Use toEntity to capture status and body for better diagnostics
+            var responseEntity = webClient.get()
+                    .uri("http://EMPRUNTSSERVICE/api/loans/book/{id}", id)
+                    .retrieve()
+                    .toEntity(new ParameterizedTypeReference<List<EmpruntResponse>>() {
+                    })
+                    .block();
+
+            if (responseEntity == null) {
+                log.info("No response entity from EmpruntsService for book {}", id);
+                return false;
+            }
+
+            var loans = responseEntity.getBody();
+            log.info("EmpruntsService returned status={} for book {}", responseEntity.getStatusCode(), id);
+
+            if (loans != null && !loans.isEmpty()) {
+                // Log detailed info: id and statut for each loan
+                log.info("Found {} loan(s) for book {}: {}", loans.size(), id,
+                        loans.stream().map(l -> String.format("{id=%s, statut=%s}", l.getId(), l.getStatut()))
+                                .toList());
+            } else {
+                log.info("No loans found for book {}", id);
+            }
+
+            boolean isBorrowed = loans != null && loans.stream()
+                    .anyMatch(l -> "ACTIF".equals(l.getStatut()) || "EN_RETARD".equals(l.getStatut()));
+
+            return !isBorrowed;
+        } catch (Exception e) {
+            // En cas d'erreur de communication avec le service d'emprunt, on considère le
+            // livre
+            // comme indisponible par précaution et on log l'erreur pour investigation.
+            log.warn("Impossible de vérifier la disponibilité du livre {} via EmpruntsService: {}", id, e.getMessage());
+            return false;
+        }
     }
 }

@@ -1,6 +1,6 @@
 # Système de Gestion de Bibliothèque - Microservices
 
-Ce projet est mon projet final de formation sur Spring, une application de gestion de bibliothèque basée sur une architecture microservices avec Spring Boot et Spring Cloud ou nous avons eu a explorer les microservices eureka pour la decouverte le tout centralisé en un seul point dentré via apiGateway securisé avec JWT et RBAC(Role-Based Access Control) avec evidemment Les routes publiques comme /login et /register exemptées.
+Ce projet est mon projet final de formation sur Spring, une application de gestion de bibliothèque basée sur une architecture microservices avec Spring Boot et Spring Cloud ou nous avons eu a explorer les microservices, utilisé eureka pour la decouverte le tout centralisé en un seul point d'entré via apiGateway securisé avec JWT et RBAC(Role-Based Access Control) avec evidemment Les routes publiques comme /login et /register exemptées.
 
 ## Architecture
 
@@ -41,9 +41,9 @@ L'API Gateway (`http://localhost:8080`) intègre désormais les fonctionnalités
 
 Toutes les requêtes doivent passer par l'API Gateway (`http://localhost:8080`).
 
-### 🛠 Guide de Test "Réel"
+### Guide de Test "Réel"
 
-Voici comment tester les nouvelles fonctionnalités implémentées.
+Voici comment tester les nouvelles fonctionnalités qui sont implémentées.
 
 #### 1. Authentification & Récupération du Token
 

@@ -86,6 +86,11 @@ class BookService {
 
     return apiRequest<LivreResponse[]>(endpoint, token)
   }
+
+  // Vérifier la disponibilité d'un livre
+  async isBookAvailable(id: number, token?: string): Promise<boolean> {
+    return apiRequest<boolean>(`/api/books/${id}/availability`, token)
+  }
 }
 
 export const bookService = new BookService()

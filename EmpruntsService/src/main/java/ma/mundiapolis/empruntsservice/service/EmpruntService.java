@@ -2,7 +2,6 @@ package ma.mundiapolis.empruntsservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ma.mundiapolis.empruntsservice.dto.BookDTO;
 import ma.mundiapolis.empruntsservice.dto.EmpruntRequest;
 import ma.mundiapolis.empruntsservice.dto.EmpruntResponse;
 import ma.mundiapolis.empruntsservice.dto.UserDTO;
@@ -35,11 +34,16 @@ public class EmpruntService implements IEmpruntService {
                 empruntRequest.getLivreId());
         // 1. Vérifier si l'utilisateur existe via WebClient
         try {
-            webClient.get()
+            UserDTO user = webClient.get()
                     .uri("http://USERSERVICE/api/users/{id}", empruntRequest.getUtilisateurId())
                     .retrieve()
                     .bodyToMono(UserDTO.class)
-                    .block(); // .block() car on est dans un service synchrone (Spring MVC)
+                    .block(); // .block() car on est dans un service synchrone
+
+            if (user == null) {
+                throw new ResourceNotFoundException(
+                        "Utilisateur non trouvé avec l'ID : " + empruntRequest.getUtilisateurId());
+            }
         } catch (Exception e) {
             throw new ResourceNotFoundException(
                     "Utilisateur non trouvé avec l'ID : " + empruntRequest.getUtilisateurId());
@@ -64,6 +68,9 @@ public class EmpruntService implements IEmpruntService {
         boolean estEmprunte = empruntRepository.existsByLivreIdAndStatutIn(
                 empruntRequest.getLivreId(),
                 List.of(StatutEmprunt.ACTIF, StatutEmprunt.EN_RETARD));
+
+        // Log the double-check result for diagnostics
+        log.info("Double-check: estEmprunte for livre {} = {}", empruntRequest.getLivreId(), estEmprunte);
 
         if (estEmprunte) {
             throw new BusinessRuleException("Ce livre est déjà en cours d'emprunt");
@@ -115,7 +122,10 @@ public class EmpruntService implements IEmpruntService {
     @Override
     @Transactional(readOnly = true)
     public List<EmpruntResponse> getEmpruntsByBookId(Long bookId) {
-        return empruntMapper.toResponseList(empruntRepository.findByLivreId(bookId));
+        log.info("getEmpruntsByBookId called for bookId={}", bookId);
+        List<EmpruntResponse> loans = empruntMapper.toResponseList(empruntRepository.findByLivreId(bookId));
+        log.info("Found {} loan(s) for bookId={}", loans.size(), bookId);
+        return loans;
     }
 
     @Override
