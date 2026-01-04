@@ -38,10 +38,10 @@ public class RateLimitingFilter implements GlobalFilter, Ordered {
                     userId = jwtUtil.extractUsername(token);
                 }
             } catch (Exception e) {
-                // Ignore, treat as anonymous
+                // J'ignore l'exception et je considère l'utilisateur comme anonyme
             }
         } else {
-            // Use IP for anonymous
+            // J'utilise l'adresse IP pour les utilisateurs anonymes
             userId = exchange.getRequest().getRemoteAddress() != null
                     ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
                     : "unknown";
@@ -61,7 +61,7 @@ public class RateLimitingFilter implements GlobalFilter, Ordered {
     }
 
     private Bucket createNewBucket(String userId) {
-        // Limit: 10 requests per minute per user
+        // Je limite à 10 requêtes par minute par utilisateur
         Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
         return Bucket.builder()
                 .addLimit(limit)

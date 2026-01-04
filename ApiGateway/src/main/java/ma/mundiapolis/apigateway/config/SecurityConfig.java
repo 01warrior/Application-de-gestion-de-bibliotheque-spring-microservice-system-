@@ -22,7 +22,7 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .authorizeExchange(auth -> auth
-                        .anyExchange().permitAll()) // Let custom filters handle authentication
+                        .anyExchange().permitAll()) // Jautorize tout ici et je gere dans les filtre custom
                 .build();
     }
 }

@@ -24,8 +24,8 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
         final String finalCorrelationId = correlationId;
 
-        // Add correlation ID to response headers only (request headers are read-only in
-        // WebFlux)
+        // J'ajoute l'ID de corrélation aux en-têtes de réponse uniquement
+        // (les en-têtes de requête sont en lecture seule dans WebFlux)
         exchange.getResponse().getHeaders().add(CORRELATION_ID_HEADER, finalCorrelationId);
 
         return chain.filter(exchange)
@@ -34,6 +34,6 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -200; // execute first to add correlation ID
+        return -200; // Je l'exécute en premier pour ajouter l'ID de corrélation
     }
 }

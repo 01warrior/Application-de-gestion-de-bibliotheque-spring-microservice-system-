@@ -39,7 +39,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         log.info("=== AuthenticationFilter START === Path: {}, Method: {}", path, method);
 
-        // Skip validation for public endpoints
+        // Je ne valide pas les endpoint public
         boolean isSecured = routeValidator.isSecured.test(request);
         log.debug("Route isSecured: {}", isSecured);
 
@@ -88,6 +88,6 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -100; // run before Spring Security filters
+        return -100; // pour exécuter avant les filtres Spring Security parce que j'autorize tout dans SecurityConfig
     }
 }

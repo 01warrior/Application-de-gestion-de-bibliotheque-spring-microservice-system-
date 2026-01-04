@@ -69,8 +69,8 @@ public class EmpruntService implements IEmpruntService {
                 empruntRequest.getLivreId(),
                 List.of(StatutEmprunt.ACTIF, StatutEmprunt.EN_RETARD));
 
-        // Log the double-check result for diagnostics
-        log.info("Double-check: estEmprunte for livre {} = {}", empruntRequest.getLivreId(), estEmprunte);
+        // Log erreur 
+        log.info("Pour checker erreur :::: estEmprunte for livre {} = {}", empruntRequest.getLivreId(), estEmprunte);
 
         if (estEmprunte) {
             throw new BusinessRuleException("Ce livre est déjà en cours d'emprunt");

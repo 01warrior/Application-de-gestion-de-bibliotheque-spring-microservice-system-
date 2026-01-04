@@ -28,7 +28,10 @@ public class RoleAuthorizationFilter implements GlobalFilter, Ordered {
                     if (auth != null) {
                         boolean isAdmin = hasRole(auth.getAuthorities(), "ADMIN");
 
-                        // Admin only routes for modification
+                        // Je limite ces routes aux administrateurs pour les opérations de modification.
+                        // J'empêche ainsi les utilisateurs non‑administrateurs de créer, modifier ou
+                        // supprimer
+                        // les livres et les utilisateurs via ces endpoints.
                         if ((path.startsWith("/api/books") || path.startsWith("/api/users"))
                                 && (method == HttpMethod.POST || method == HttpMethod.PUT
                                         || method == HttpMethod.DELETE)) {
@@ -43,6 +46,8 @@ public class RoleAuthorizationFilter implements GlobalFilter, Ordered {
                 .switchIfEmpty(chain.filter(exchange));
     }
 
+    // Je vérifie si l'utilisateur possède le rôle demandé (j'accepte 'ROLE_<role>'
+    // ou '<role>').
     private boolean hasRole(Collection<? extends GrantedAuthority> authorities, String role) {
         return authorities.stream()
                 .anyMatch(a -> a.getAuthority().equals(role) || a.getAuthority().equals("ROLE_" + role));
