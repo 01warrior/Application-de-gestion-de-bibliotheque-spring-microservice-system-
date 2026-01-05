@@ -61,8 +61,8 @@ public class RateLimitingFilter implements GlobalFilter, Ordered {
     }
 
     private Bucket createNewBucket(String userId) {
-        // Je limite à 10 requêtes par minute par utilisateur
-        Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
+        // Je limite à 20 requêtes par minute par utilisateur
+        Bandwidth limit = Bandwidth.classic(20, Refill.greedy(20, Duration.ofMinutes(1)));
         return Bucket.builder()
                 .addLimit(limit)
                 .build();

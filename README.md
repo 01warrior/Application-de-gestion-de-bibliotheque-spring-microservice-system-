@@ -1,8 +1,10 @@
 # Système de Gestion de Bibliothèque - Microservices
 
+![alt text](image.png)
+
 Ce projet est mon projet final de formation sur Spring, une application de gestion de bibliothèque basée sur une architecture microservices avec Spring Boot et Spring Cloud ou nous avons eu a explorer les microservices, utilisé eureka pour la decouverte le tout centralisé en un seul point d'entré via apiGateway securisé avec JWT et RBAC(Role-Based Access Control) avec evidemment Les routes publiques comme /login et /register exemptées.
 
-## Architecture
+## Architecture.
 
 L'application est composée des services suivants :
 
